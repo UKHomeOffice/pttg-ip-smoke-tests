@@ -1,1 +1,31 @@
+
+
+
+repositories {
+    mavenCentral()
+}
+
+
 apply plugin: 'java'
+
+
+dependencies {
+
+    compile "com.fasterxml.jackson.core:jackson-annotations:2.9.5"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.9.5"
+    compile "com.fasterxml.jackson.core:jackson-core:2.9.5"
+    compile('org.seleniumhq.selenium:selenium-java:3.14.0')
+
+    testCompile 'io.github.bonigarcia:webdrivermanager:2.2.2'
+
+    compile('ch.qos.logback:logback-classic:1.2.3')
+
+    testCompile 'org.assertj:assertj-core:3.10.0'
+    testCompile 'org.springframework:spring-test:4.3.18.RELEASE'
+
+
+    testCompile "junit:junit:4.12"
+
+    compileOnly 'org.projectlombok:lombok:1.18.0'
+    annotationProcessor 'org.projectlombok:lombok:1.18.0'
+}
