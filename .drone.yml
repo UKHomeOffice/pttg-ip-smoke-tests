@@ -1,5 +1,42 @@
 pipeline:
 
+  build-docker-image:
+    image: docker:17.09.1
+    environment:
+      - DOCKER_HOST=tcp://172.17.0.1:2375
+    commands:
+      - docker build -t pttg-ip-smoke-tests .
+    when:
+      branch: master
+      event: push
+
+  install-docker-image:
+    image: docker:17.09.1
+    environment:
+      - DOCKER_HOST=tcp://172.17.0.1:2375
+    secrets:
+      - docker_password
+    commands:
+      - docker login -u="ukhomeofficedigital+pttg" -p=$${DOCKER_PASSWORD} quay.io
+      - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
+      - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
+    when:
+      branch: master
+      event: push
+      
+  tag-docker-image-with-git-tag:
+    image: docker:17.09.1
+    environment:
+      - DOCKER_HOST=tcp://172.17.0.1:2375
+    secrets:
+      - docker_password
+    commands:
+      - docker login -u="ukhomeofficedigital+pttg" -p=$${DOCKER_PASSWORD} quay.io
+      - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:$${DRONE_TAG}
+      - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:$${DRONE_TAG}
+    when:
+      event: tag
+
   smoke-test:
     image: quay.io/ukhomeofficedigital/kd:v0.8.0
     commands:
