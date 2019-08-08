@@ -1,0 +1,8 @@
+pipeline:
+
+  smoke-test:
+    image: quay.io/ukhomeofficedigital/kd:v0.8.0
+    commands:
+      - echo smoke test triggered
+    when:
+      event: deployment
