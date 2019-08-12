@@ -7,7 +7,7 @@ pipeline:
     commands:
       - docker build -t pttg-ip-smoke-tests .
     when:
-      branch: [master, EE-6825-skeleton-drone-job]
+      branch: master
       event: push
 
   install-docker-image:
@@ -21,7 +21,7 @@ pipeline:
       - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
       - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
     when:
-      branch: [master, EE-6825-skeleton-drone-job]
+      branch: master
       event: push
       
   tag-docker-image-with-git-tag:
