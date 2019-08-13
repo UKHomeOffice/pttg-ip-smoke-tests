@@ -19,7 +19,7 @@ ENV GRADLE_USER_HOME /home/${USER}
 RUN yum install wget unzip -y -q
 
 # Install gradle - we do this instead using the wrapper so that the running container doesn't have to perform the download of Gradle.
-# This makes the container start faster and removes the dependency on the Gralde download being available.
+# This makes the container start faster and removes the dependency on the Gradle download being available.
 WORKDIR /usr/local
 RUN wget  https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q && \
     unzip -q gradle-$GRADLE_VERSION-bin.zip && \
