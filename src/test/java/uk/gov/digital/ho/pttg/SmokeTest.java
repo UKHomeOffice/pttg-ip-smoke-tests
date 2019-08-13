@@ -2,8 +2,6 @@ package uk.gov.digital.ho.pttg;
 
 import org.junit.Test;
 
-import static junit.framework.TestCase.fail;
-
 public class SmokeTest {
 
     @Test
