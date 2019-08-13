@@ -39,4 +39,4 @@ pipeline:
       - cd kube-pttg-ip-smoke-tests
       - ./deploy.sh
     when:
-      event: deployment
+      event: [deployment, push]
