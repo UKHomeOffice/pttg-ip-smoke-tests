@@ -39,6 +39,9 @@ pipeline:
       - pttg_ip_dev
       - pttg_ip_test
       - pttg_ip_pr
+    environment:
+      - KUBE_NAMESPACE=pttg-ip-${DRONE_DEPLOY_TO}
+      - ENVIRONMENT=${DRONE_DEPLOY_TO}
     commands:
       - cd kube-pttg-ip-smoke-tests
       - ./deploy.sh
