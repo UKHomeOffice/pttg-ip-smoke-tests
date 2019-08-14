@@ -32,6 +32,6 @@ RUN groupadd ${GROUP} && \
 WORKDIR /app
 
 # Switch user to gradle user
-USER $USER
+USER $USER_ID
 
 ENTRYPOINT gradle build
