@@ -24,9 +24,19 @@ pipeline:
       branch: master
       event: push
 
+  clone-kube-project:
+    image: plugins/git
+    commands:
+      - git clone https://github.com/UKHomeOffice/kube-pttg-ip-smoke-tests.git
+      - cd kube-pttg-ip-smoke-tests
+      - git checkout $${KUBE_BRANCH:=master}
+    when:
+      event: [push, deployment]
+
   smoke-test:
     image: quay.io/ukhomeofficedigital/kd:v0.8.0
     commands:
-      - echo smoke test triggered
+      - cd kube-pttg-ip-smoke-tests
+      - ./deploy.sh
     when:
       event: deployment
