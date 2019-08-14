@@ -35,6 +35,10 @@ pipeline:
 
   smoke-test:
     image: quay.io/ukhomeofficedigital/kd:v0.8.0
+    secrets:
+      - pttg_ip_dev
+      - pttg_ip_test
+      - pttg_ip_pr
     commands:
       - cd kube-pttg-ip-smoke-tests
       - ./deploy.sh
