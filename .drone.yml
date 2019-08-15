@@ -36,7 +36,7 @@ pipeline:
       event: [push, deployment]
 
   smoke-test:
-    image: quay.io/ukhomeofficedigital/kd:v0.8.0
+    image: quay.io/ukhomeofficedigital/kd:v1.14.0
     secrets:
       - pttg_ip_dev
       - pttg_ip_test
