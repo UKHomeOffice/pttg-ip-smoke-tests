@@ -21,6 +21,7 @@ pipeline:
       - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
       - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:latest
       - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
+      - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:latest
     when:
       branch: master
       event: push
