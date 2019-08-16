@@ -69,16 +69,17 @@ class SimpleHttpClient {
 
     private CredentialsProvider getCredentialsProvider() {
         CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        for (Map.Entry<String, String> credentialsEntry : basicAuthConfig.entrySet()) {
-            HttpHost host = extractHost(credentialsEntry.getKey());
-            String credentials = credentialsEntry.getValue();
-            String username = credentials.split(":")[0];
-            String password = credentials.split(":")[1];
-
-            credentialsProvider.setCredentials(new AuthScope(host),
-                                               new UsernamePasswordCredentials(username, password));
-        }
+        basicAuthConfig.forEach((url, credentials) -> {
+            HttpHost host = extractHost(url);
+            credentialsProvider.setCredentials(new AuthScope(host), splitCredentials(credentials));
+        });
         return credentialsProvider;
+    }
+
+    private UsernamePasswordCredentials splitCredentials(String credentials) {
+        String username = credentials.split(":")[0];
+        String password = credentials.split(":")[1];
+        return new UsernamePasswordCredentials(username, password);
     }
 
     private HttpHost extractHost(String url) {
