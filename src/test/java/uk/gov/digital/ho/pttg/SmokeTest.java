@@ -1,7 +1,6 @@
 package uk.gov.digital.ho.pttg;
 
 import com.google.gson.*;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.digital.ho.pttg.api.FinancialStatusRequest;
@@ -18,7 +17,6 @@ public class SmokeTest {
     private final String IP_API_PATH = "/incomeproving/v3/individual/financialstatus";
 
     private String ipApiRootUrl;
-    private CloseableHttpClient httpClient;
     private SimpleHttpClient simpleHttpClient;
     private Gson gson;
 
