@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -26,13 +27,16 @@ public class SmokeTest {
     private final String IP_API_PATH = "/incomeproving/v3/individual/financialstatus";
 
     private String ipApiRootUrl;
+    private String ipApiAuth;
+
     private SimpleHttpClient simpleHttpClient;
     private ObjectMapper objectMapper;
 
     @Before
     public void setUp() {
         ipApiRootUrl = getMandatoryEnvVar("IP_API_ROOT_URL");
-        simpleHttpClient = new SimpleHttpClient();
+        ipApiAuth = getMandatoryEnvVar("IP_API_AUTH");
+        simpleHttpClient = new SimpleHttpClient(Collections.singletonMap(ipApiRootUrl, ipApiAuth));
         objectMapper = initialiseObjectMapper(new ObjectMapper());
     }
 
