@@ -38,11 +38,7 @@ public class SmokeTest {
 
     @Test
     public void testIpApi() throws JsonProcessingException {
-        String body = buildRequest();
-        System.out.println(body);
-        HttpResponse response = simpleHttpClient.post(ipApiRootUrl + IP_API_PATH, body);
-        System.out.println(response.body());
-
+        HttpResponse response = simpleHttpClient.post(ipApiRootUrl + IP_API_PATH, buildRequest());
         assertThat(response.statusCode()).isEqualTo(404);
         assertThat(response.body()).contains("Resource not found");
     }
