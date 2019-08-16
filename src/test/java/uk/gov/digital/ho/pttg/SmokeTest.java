@@ -9,6 +9,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.YearMonthDeserializer;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import uk.gov.digital.ho.pttg.api.FinancialStatusRequest;
 import uk.gov.digital.ho.pttg.api.HttpResponse;
@@ -27,17 +28,13 @@ public class SmokeTest {
     private final String IP_API_PATH = "/incomeproving/v3/individual/financialstatus";
 
     private String ipApiRootUrl;
-    private String ipApiAuth;
 
-    private SimpleHttpClient simpleHttpClient;
-    private ObjectMapper objectMapper;
+    private SimpleHttpClient simpleHttpClient = getClient();
+    private ObjectMapper objectMapper = initialiseObjectMapper(new ObjectMapper());
 
     @Before
     public void setUp() {
         ipApiRootUrl = getMandatoryEnvVar("IP_API_ROOT_URL");
-        ipApiAuth = getMandatoryEnvVar("IP_API_AUTH");
-        simpleHttpClient = new SimpleHttpClient(Collections.singletonMap(ipApiRootUrl, ipApiAuth));
-        objectMapper = initialiseObjectMapper(new ObjectMapper());
     }
 
     @Test
@@ -51,12 +48,18 @@ public class SmokeTest {
         return objectMapper.writeValueAsString(FinancialStatusRequest.anyRequest());
     }
 
-    private String getMandatoryEnvVar(String envVarName) {
+    private static String getMandatoryEnvVar(String envVarName) {
         String envVarValue = System.getenv(envVarName);
         if (envVarValue == null) {
             fail(String.format("No environment variable for %s found", envVarName));
         }
         return envVarValue;
+    }
+
+    private static SimpleHttpClient getClient() {
+        String ipApiRootUrl = getMandatoryEnvVar("IP_API_ROOT_URL");
+        String ipApiAuth = getMandatoryEnvVar("IP_API_AUTH");
+        return new SimpleHttpClient(Collections.singletonMap(ipApiRootUrl, ipApiAuth));
     }
 
     private static ObjectMapper initialiseObjectMapper(final ObjectMapper objectMapper) {

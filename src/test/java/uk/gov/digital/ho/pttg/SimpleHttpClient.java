@@ -24,13 +24,12 @@ import java.util.Map;
 
 class SimpleHttpClient {
 
-    private final Map<String, String> basicAuthConfig;
     private final CloseableHttpClient httpClient;
 
     SimpleHttpClient(Map<String, String> basicAuthConfig) {
-        this.basicAuthConfig = basicAuthConfig;
+        CredentialsProvider credentialsProvider = getCredentialsProvider(basicAuthConfig);
         httpClient = HttpClientBuilder.create()
-                                      .setDefaultCredentialsProvider(getCredentialsProvider())
+                                      .setDefaultCredentialsProvider(credentialsProvider)
                                       .build();
     }
 
@@ -67,7 +66,7 @@ class SimpleHttpClient {
         authCache.put(extractHost(url), new BasicScheme());
     }
 
-    private CredentialsProvider getCredentialsProvider() {
+    private CredentialsProvider getCredentialsProvider(Map<String, String> basicAuthConfig) {
         CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         basicAuthConfig.forEach((url, credentials) -> {
             HttpHost host = extractHost(url);
