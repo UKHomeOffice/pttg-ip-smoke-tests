@@ -47,28 +47,24 @@ class SimpleHttpClient {
         request.addHeader("Content-Type", "application/json");
         request.setEntity(new StringEntity(body));
 
-        HttpClientContext context = getClientContext();
+        HttpClientContext context = getClientContext(url);
 
         try (CloseableHttpResponse response = httpClient.execute(request, context)) {
             return new HttpResponse(response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
         }
     }
 
-    private HttpClientContext getClientContext() {
+    private HttpClientContext getClientContext(String url) {
         HttpClientContext context = HttpClientContext.create();
-        addBasicAuth(context);
+        addBasicAuth(context, url);
         return context;
     }
 
-    private void addBasicAuth(HttpClientContext context) {
+    private void addBasicAuth(HttpClientContext context, String url) {
         AuthCache authCache = new BasicAuthCache();
-        BasicScheme basicAuth = new BasicScheme();
-
-        for (Map.Entry<String, String> credentialsEntry : basicAuthConfig.entrySet()) {
-            HttpHost host = extractHost(credentialsEntry.getKey());
-            authCache.put(host, basicAuth);
-        }
         context.setAuthCache(authCache);
+
+        authCache.put(extractHost(url), new BasicScheme());
     }
 
     private CredentialsProvider getCredentialsProvider() {
