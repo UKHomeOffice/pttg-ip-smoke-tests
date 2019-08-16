@@ -1,18 +1,18 @@
 package uk.gov.digital.ho.pttg.api;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+
 import java.time.LocalDate;
 
+@AllArgsConstructor
 class Applicant {
-
-    Applicant(String forename, String surname, LocalDate dateOfBirth, String nino) {
-        this.forename = forename;
-        this.surname = surname;
-        this.dateOfBirth = dateOfBirth;
-        this.nino = nino;
-    }
-
+    @JsonProperty("forename")
     private String forename;
+    @JsonProperty("surname")
     private String surname;
+    @JsonProperty("dateOfBirth")
     private LocalDate dateOfBirth;
+    @JsonProperty("nino")
     private String nino;
 }
