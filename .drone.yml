@@ -1,5 +1,12 @@
 pipeline:
 
+  build-project:
+      image: quay.io/ukhomeofficedigital/openjdk8:v1.1.0
+      commands:
+        - ./gradlew build --max-workers 1
+      when:
+        event: [push, pull_request, tag]
+        
   build-docker-image:
     image: docker:17.09.1
     environment:
