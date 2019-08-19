@@ -16,7 +16,7 @@ public class SmokeTestsResource {
         this.smokeTestsService = smokeTestsService;
     }
 
-    @PostMapping
+    @PostMapping("/smoketests")
     public void runSmokeTests() {
         log.info("Smoke Tests triggered");
         SmokeTestsResult smokeTestsResult = smokeTestsService.runSmokeTests();
