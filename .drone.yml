@@ -19,9 +19,7 @@ pipeline:
     commands:
       - docker login -u="ukhomeofficedigital+pttg_ip_smoke_tests" -p=$${DOCKER_PASSWORD} quay.io
       - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
-      - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:latest
       - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
-      - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:latest
     when:
       branch: master
       event: push
@@ -35,17 +33,18 @@ pipeline:
     when:
       event: [push, deployment]
 
-  smoke-test:
+  deploy-to-dev-from-build-number:
     image: quay.io/ukhomeofficedigital/kd:v1.14.0
+    environment:
+      - KUBE_NAMESPACE=pttg-ip-dev
+      - ENVIRONMENT=dev
+      - VERSION=build-${DRONE_BUILD_NUMBER}
+      - KUBE_SERVER=https://kube-api-notprod.notprod.acp.homeoffice.gov.uk
     secrets:
       - pttg_ip_dev
-      - pttg_ip_test
-      - pttg_ip_pr
-    environment:
-      - KUBE_NAMESPACE=pttg-ip-${DRONE_DEPLOY_TO}
-      - ENVIRONMENT=${DRONE_DEPLOY_TO}
     commands:
       - cd kube-pttg-ip-smoke-tests
       - ./deploy.sh
     when:
-      event: deployment
+      branch: master
+      event: [push, tag]
