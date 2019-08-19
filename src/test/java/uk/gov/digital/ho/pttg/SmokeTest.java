@@ -10,6 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.YearMonthDeserializer;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.digital.ho.pttg.api.FinancialStatusRequest;
 import uk.gov.digital.ho.pttg.api.HttpResponse;
@@ -23,6 +24,7 @@ import java.util.Collections;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+@Ignore("TODO EE-6825 Moving away from a Kubernetes Job that runs these tests towards a RESTful service.")
 public class SmokeTest {
 
     private final String IP_API_PATH = "/incomeproving/v3/individual/financialstatus";
