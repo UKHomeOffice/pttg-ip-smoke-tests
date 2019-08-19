@@ -1,6 +1,7 @@
 package uk.gov.digital.ho.pttg.api;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.digital.ho.pttg.testrunner.SmokeTestsService;
@@ -16,12 +17,15 @@ public class SmokeTestsResource {
     }
 
     @PostMapping
-    public SmokeTestsResult runSmokeTests() {
+    public void runSmokeTests() {
         log.info("Smoke Tests triggered");
         SmokeTestsResult smokeTestsResult = smokeTestsService.runSmokeTests();
 
         logOutcome(smokeTestsResult);
-        return smokeTestsResult;
+
+        if (!smokeTestsResult.success()) {
+            throw new TestFailureException(smokeTestsResult.reason());
+        }
     }
 
     private void logOutcome(SmokeTestsResult result) {

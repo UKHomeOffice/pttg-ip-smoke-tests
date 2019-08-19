@@ -4,7 +4,9 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -15,7 +17,6 @@ import uk.gov.digital.ho.pttg.testrunner.SmokeTestsService;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.atLeastOnce;
@@ -24,12 +25,15 @@ import static org.mockito.Mockito.times;
 @RunWith(MockitoJUnitRunner.class)
 public class SmokeTestsResourceTest {
 
-    private static final SmokeTestsResult ANY_RESULT = new SmokeTestsResult(false);
+    private static final SmokeTestsResult ANY_RESULT = new SmokeTestsResult(true);
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
     @Mock
     private SmokeTestsService mockService;
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     private SmokeTestsResource resource;
     private ArgumentCaptor<ILoggingEvent> logCaptor;
@@ -44,15 +48,6 @@ public class SmokeTestsResourceTest {
     }
 
     @Test
-    public void runSmokeTests_always_logEntry() {
-        given(mockService.runSmokeTests()).willReturn(ANY_RESULT);
-        resource.runSmokeTests();
-
-        then(mockAppender).should(atLeastOnce()).doAppend(logCaptor.capture());
-        assertLogWithMessageContaining(logCaptor.getAllValues(), "Smoke Tests", "triggered");
-    }
-
-    @Test
     public void runSmokeTest_always_callService() {
         given(mockService.runSmokeTests()).willReturn(ANY_RESULT);
         resource.runSmokeTests();
@@ -60,13 +55,39 @@ public class SmokeTestsResourceTest {
     }
 
     @Test
-    public void runSmokeTest_resultFromService_returned() {
+    public void runSmokeTest_successFromService_noException() {
         SmokeTestsResult expectedResult = SmokeTestsResult.SUCCESS;
         given(mockService.runSmokeTests()).willReturn(expectedResult);
 
-        SmokeTestsResult actualResult = resource.runSmokeTests();
+        resource.runSmokeTests();
+    }
 
-        assertThat(actualResult).isEqualTo(expectedResult);
+    @Test
+    public void runSmokeTest_failureFromService_throwException() {
+        SmokeTestsResult failure = new SmokeTestsResult(false);
+        given(mockService.runSmokeTests()).willReturn(failure);
+
+        expectedException.expect(TestFailureException.class);
+        resource.runSmokeTests();
+    }
+
+    @Test
+    public void runSmokeTest_failureFromServiceWithReason_throwExceptionWithReason() {
+        SmokeTestsResult failure = new SmokeTestsResult(false, "some reason");
+        given(mockService.runSmokeTests()).willReturn(failure);
+
+        expectedException.expect(TestFailureException.class);
+        expectedException.expectMessage("some reason");
+        resource.runSmokeTests();
+    }
+
+    @Test
+    public void runSmokeTests_always_logEntry() {
+        given(mockService.runSmokeTests()).willReturn(ANY_RESULT);
+        resource.runSmokeTests();
+
+        then(mockAppender).should(atLeastOnce()).doAppend(logCaptor.capture());
+        assertLogWithMessageContaining(logCaptor.getAllValues(), "Smoke Tests", "triggered");
     }
 
     @Test
@@ -82,6 +103,7 @@ public class SmokeTestsResourceTest {
     @Test
     public void runSmokeTest_failure_logFailure() {
         SmokeTestsResult someFailure = new SmokeTestsResult(false);
+        expectedException.expect(TestFailureException.class);
         given(mockService.runSmokeTests()).willReturn(someFailure);
 
         resource.runSmokeTests();
@@ -96,6 +118,7 @@ public class SmokeTestsResourceTest {
 
         SmokeTestsResult someFailureWithReason = new SmokeTestsResult(false, someReason);
         given(mockService.runSmokeTests()).willReturn(someFailureWithReason);
+        expectedException.expect(TestFailureException.class);
 
         resource.runSmokeTests();
         then(mockAppender).should(times(2)).doAppend(logCaptor.capture());
