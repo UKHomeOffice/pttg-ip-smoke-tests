@@ -12,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import uk.gov.digital.ho.pttg.application.TestFailureException;
 import uk.gov.digital.ho.pttg.testrunner.SmokeTestsService;
 
 import java.util.Arrays;
