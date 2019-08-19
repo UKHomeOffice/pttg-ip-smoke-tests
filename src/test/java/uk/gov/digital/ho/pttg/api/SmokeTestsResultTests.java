@@ -5,20 +5,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SmokeTestsResultTests {
 
     private static final boolean ANY_BOOLEAN = false;
 
     private ObjectMapper objectMapper = new ObjectMapper();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void serialization_success_serializes() throws JsonProcessingException {
@@ -41,8 +37,8 @@ public class SmokeTestsResultTests {
         SmokeTestsResult noReason = new SmokeTestsResult(ANY_BOOLEAN);
         String serializedResult = objectMapper.writeValueAsString(noReason);
 
-        expectedException.expect(PathNotFoundException.class);
-        JsonPath.read(serializedResult, "$.reason");
+        assertThatThrownBy(() -> JsonPath.read(serializedResult, "$.reason"))
+                .isInstanceOf(PathNotFoundException.class);
     }
 
     @Test
@@ -50,8 +46,8 @@ public class SmokeTestsResultTests {
         SmokeTestsResult emptyReason = new SmokeTestsResult(ANY_BOOLEAN, "");
         String serializedResult = objectMapper.writeValueAsString(emptyReason);
 
-        expectedException.expect(PathNotFoundException.class);
-        JsonPath.read(serializedResult, "$.reason");
+        assertThatThrownBy(() -> JsonPath.read(serializedResult, "$.reason"))
+                .isInstanceOf(PathNotFoundException.class);
     }
 
     @Test
