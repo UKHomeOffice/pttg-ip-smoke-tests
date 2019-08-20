@@ -1,5 +1,6 @@
 package uk.gov.digital.ho.pttg.testrunner;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class IpsClient {
     private final String basicAuth;
     private RestTemplate restTemplate;
 
-    public IpsClient(String ipsEndpoint, String basicAuth, RestTemplate restTemplate) {
+    public IpsClient(@Value("${ips.endpoint}") String ipsEndpoint, @Value("${ips.basicauth}") String basicAuth, RestTemplate restTemplate) {
         this.ipsEndpoint = ipsEndpoint;
         this.basicAuth = basicAuth;
         this.restTemplate = restTemplate;

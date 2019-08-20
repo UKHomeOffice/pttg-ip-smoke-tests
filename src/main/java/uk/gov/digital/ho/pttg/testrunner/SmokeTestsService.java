@@ -2,6 +2,7 @@ package uk.gov.digital.ho.pttg.testrunner;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
 import uk.gov.digital.ho.pttg.testrunner.domain.Applicant;
 import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
@@ -22,6 +23,8 @@ public class SmokeTestsService {
         try {
             ipsClient.sendFinancialStatusRequest(someRequest());
             return SmokeTestsResult.SUCCESS;
+        } catch (RestClientResponseException e) {
+            return new SmokeTestsResult(false, e.getResponseBodyAsString());
         } catch (RestClientException e) {
             return new SmokeTestsResult(false, e.getMessage());
         }

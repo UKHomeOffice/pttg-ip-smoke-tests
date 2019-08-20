@@ -5,12 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 @AllArgsConstructor
 @Getter
 @Accessors(fluent = true)
 @EqualsAndHashCode
+@ToString
 public class SmokeTestsResult {
 
     public static final SmokeTestsResult SUCCESS = new SmokeTestsResult(true);

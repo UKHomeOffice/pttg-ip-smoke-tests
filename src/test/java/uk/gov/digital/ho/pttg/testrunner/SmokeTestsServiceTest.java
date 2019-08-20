@@ -9,6 +9,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
 import uk.gov.digital.ho.pttg.testrunner.domain.Applicant;
 import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
@@ -58,11 +59,25 @@ public class SmokeTestsServiceTest {
     }
 
     @Test
-    public void runSmokeTests_financialStatusRequestFailure_returnFailure() {
+    public void runSmokeTests_RestClientResponseException_returnFailure() {
+        String failureMessage = "some failure message";
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getRestClientResponseException(failureMessage));
+
+        SmokeTestsResult testsResult = service.runSmokeTests();
+
+        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, failureMessage));
+    }
+
+    @Test
+    public void runSmokeTests_RestClientException_returnFailure() {
         given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(new RestClientException("some failure message"));
 
         SmokeTestsResult testsResult = service.runSmokeTests();
 
         assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, "some failure message"));
+    }
+
+    private RestClientResponseException getRestClientResponseException(String failureMessage) {
+        return new RestClientResponseException("Internal Server Error", 500, "Internal Server Error", null, failureMessage.getBytes(), null);
     }
 }
