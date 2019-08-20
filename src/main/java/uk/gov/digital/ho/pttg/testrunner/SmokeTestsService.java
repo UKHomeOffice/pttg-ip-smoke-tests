@@ -1,6 +1,11 @@
 package uk.gov.digital.ho.pttg.testrunner;
 
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
@@ -23,10 +28,22 @@ public class SmokeTestsService {
         try {
             ipsClient.sendFinancialStatusRequest(someRequest());
             return SmokeTestsResult.SUCCESS;
-        } catch (RestClientResponseException e) {
+        } catch (HttpStatusCodeException e) {
+            if (isIdentityUnmatched(e)) {
+                return SmokeTestsResult.SUCCESS;
+            }
             return new SmokeTestsResult(false, e.getResponseBodyAsString());
         } catch (RestClientException e) {
             return new SmokeTestsResult(false, e.getMessage());
+        }
+    }
+
+    private boolean isIdentityUnmatched(HttpStatusCodeException e) {
+        try {
+            boolean hasNotMatchedCode = JsonPath.read(e.getResponseBodyAsString(), "$.code").equals("0009");
+            return e.getStatusCode().equals(HttpStatus.NOT_FOUND) && hasNotMatchedCode;
+        } catch (PathNotFoundException ignored) {
+            return false;
         }
     }
 

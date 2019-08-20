@@ -8,8 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
 import uk.gov.digital.ho.pttg.testrunner.domain.Applicant;
 import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.http.HttpStatus.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SmokeTestsServiceTest {
@@ -59,9 +60,19 @@ public class SmokeTestsServiceTest {
     }
 
     @Test
-    public void runSmokeTests_RestClientResponseException_returnFailure() {
+    public void runSmokeTests_financialStatusRequestNoMatch_returnSuccess() {
+        String notFoundMessage = "{\"code\": \"0009\", \"message\": \"any message\"}";
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, notFoundMessage));
+
+        SmokeTestsResult testsResult = service.runSmokeTests();
+
+        assertThat(testsResult).isEqualTo(SmokeTestsResult.SUCCESS);
+    }
+
+    @Test
+    public void runSmokeTests_notFoundButWrongMessage_returnFailure() {
         String failureMessage = "some failure message";
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getRestClientResponseException(failureMessage));
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, failureMessage));
 
         SmokeTestsResult testsResult = service.runSmokeTests();
 
@@ -69,15 +80,28 @@ public class SmokeTestsServiceTest {
     }
 
     @Test
-    public void runSmokeTests_RestClientException_returnFailure() {
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(new RestClientException("some failure message"));
+    public void runSmokeTests_otherClientError_returnFailure() {
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(BAD_REQUEST, "some failure message"));
 
         SmokeTestsResult testsResult = service.runSmokeTests();
 
         assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, "some failure message"));
     }
 
-    private RestClientResponseException getRestClientResponseException(String failureMessage) {
-        return new RestClientResponseException("Internal Server Error", 500, "Internal Server Error", null, failureMessage.getBytes(), null);
+    @Test
+    public void runSmokeTests_serverError_returnFailure() {
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpServerErrorException(INTERNAL_SERVER_ERROR, "some failure message"));
+
+        SmokeTestsResult testsResult = service.runSmokeTests();
+
+        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, "some failure message"));
+    }
+
+    private HttpClientErrorException getHttpClientErrorException(HttpStatus httpStatus, String failureMessage) {
+        return new HttpClientErrorException(httpStatus, "", failureMessage.getBytes(), null);
+    }
+
+    private HttpServerErrorException getHttpServerErrorException(HttpStatus httpStatus, String failureMessage) {
+        return new HttpServerErrorException(httpStatus, "", failureMessage.getBytes(), null);
     }
 }
