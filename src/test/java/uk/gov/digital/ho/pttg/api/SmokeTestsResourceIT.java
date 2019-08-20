@@ -19,7 +19,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -47,7 +47,7 @@ public class SmokeTestsResourceIT {
         mockIpsService.expect(requestTo(containsString("/incomeproving/v3/individual/financialstatus")))
                       .andExpect(method(POST))
                       .andExpect(jsonPath("$.individuals[0].forename", equalTo("smoke")))
-                      .andRespond(withSuccess());
+                      .andRespond(withStatus(HttpStatus.NOT_FOUND).body("{\"code\": \"0009\", \"message\": \"Resource not found\"}"));
 
         ResponseEntity<Void> response = testRestTemplate.exchange("/smoketests", POST, new HttpEntity<>(""), Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
