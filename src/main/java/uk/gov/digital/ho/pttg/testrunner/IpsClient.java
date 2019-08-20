@@ -3,6 +3,7 @@ package uk.gov.digital.ho.pttg.testrunner;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
 
@@ -12,6 +13,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
+@Component
 public class IpsClient {
 
     private final String ipsEndpoint;

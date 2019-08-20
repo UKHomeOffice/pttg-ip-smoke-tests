@@ -3,6 +3,7 @@ package uk.gov.digital.ho.pttg.testrunner.domain;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.List;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 @AllArgsConstructor
+@EqualsAndHashCode
 public class FinancialStatusRequest {
 
     @JsonProperty("individuals")

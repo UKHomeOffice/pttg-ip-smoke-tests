@@ -3,12 +3,14 @@ package uk.gov.digital.ho.pttg.api;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
 @AllArgsConstructor
 @Getter
 @Accessors(fluent = true)
+@EqualsAndHashCode
 public class SmokeTestsResult {
 
     public static final SmokeTestsResult SUCCESS = new SmokeTestsResult(true);
