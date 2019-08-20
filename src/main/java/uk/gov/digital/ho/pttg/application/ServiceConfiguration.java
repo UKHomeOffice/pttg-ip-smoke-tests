@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 @Configuration
 public class ServiceConfiguration {
 
+    @Bean
     public ObjectMapper createObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
 
