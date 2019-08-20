@@ -2,12 +2,14 @@ package uk.gov.digital.ho.pttg.testrunner.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
+@AllArgsConstructor
 public class FinancialStatusRequest {
 
     @JsonProperty("individuals")
@@ -19,11 +21,4 @@ public class FinancialStatusRequest {
     @JsonProperty("dependants")
     @JsonInclude(NON_NULL)
     private final Integer dependants;
-
-
-    public FinancialStatusRequest(List<Applicant> applicants, LocalDate applicationRaisedDate, Integer dependants) {
-        this.applicants = applicants;
-        this.applicationRaisedDate = applicationRaisedDate;
-        this.dependants = dependants;
-    }
 }
