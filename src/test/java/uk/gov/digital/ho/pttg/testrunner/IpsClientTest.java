@@ -16,8 +16,10 @@ import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -72,6 +74,28 @@ public class IpsClientTest {
                               .exchange(eq(SOME_IPS_ENDPOINT), eq(POST), httpEntityCaptor.capture(), eq(Void.class));
         HttpHeaders headers = httpEntityCaptor.getValue().getHeaders();
         assertThat(headers.get("Authorization").get(0)).isEqualTo("Basic " + Base64.getEncoder().encodeToString(SOME_BASIC_AUTH.getBytes()));
+    }
+
+    @Test
+    public void sendFinancialStatusRequest_anyRequest_includeCorrelationId() {
+        ipsClient.sendFinancialStatusRequest(ANY_REQUEST);
+
+        then(mockRestTemplate).should()
+                              .exchange(eq(SOME_IPS_ENDPOINT), eq(POST), httpEntityCaptor.capture(), eq(Void.class));
+        HttpHeaders headers = httpEntityCaptor.getValue().getHeaders();
+        String correlationId = headers.get("x-correlation-id").get(0);
+        assertThatCode(() -> UUID.fromString(correlationId)).doesNotThrowAnyException();
+    }
+
+    @Test
+    public void sendFinancialStatusRequest_anyRequest_includeUserId() {
+        ipsClient.sendFinancialStatusRequest(ANY_REQUEST);
+
+        then(mockRestTemplate).should()
+                              .exchange(eq(SOME_IPS_ENDPOINT), eq(POST), httpEntityCaptor.capture(), eq(Void.class));
+        HttpHeaders headers = httpEntityCaptor.getValue().getHeaders();
+        String userId = headers.get("x-auth-userid").get(0);
+        assertThat(userId).isEqualTo("smoke-tests");
     }
 
     @Test

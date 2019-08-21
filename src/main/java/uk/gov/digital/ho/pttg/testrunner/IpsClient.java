@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
 
 import java.util.Base64;
+import java.util.UUID;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpMethod.POST;
@@ -35,6 +36,8 @@ public class IpsClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(APPLICATION_JSON);
         headers.add(AUTHORIZATION, String.format("Basic %s", Base64.getEncoder().encodeToString(basicAuth.getBytes())));
+        headers.add("x-correlation-id", UUID.randomUUID().toString());
+        headers.add("x-auth-userid", "smoke-tests");
         return headers;
     }
 }
