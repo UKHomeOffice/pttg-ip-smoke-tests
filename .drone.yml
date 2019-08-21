@@ -14,7 +14,7 @@ pipeline:
     commands:
       - docker build -t pttg-ip-smoke-tests .
     when:
-      branch: master
+#      branch: master
       event: push
 
   install-docker-image:
@@ -25,10 +25,10 @@ pipeline:
       - docker_password
     commands:
       - docker login -u="ukhomeofficedigital+pttg_ip_smoke_tests" -p=$${DOCKER_PASSWORD} quay.io
-      - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
-      - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
+      - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}-ojr
+      - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}-ojr
     when:
-      branch: master
+#      branch: master
       event: push
 
   clone-kube-project:
@@ -36,7 +36,8 @@ pipeline:
     commands:
       - git clone https://github.com/UKHomeOffice/kube-pttg-ip-smoke-tests.git
       - cd kube-pttg-ip-smoke-tests
-      - git checkout $${KUBE_BRANCH:=master}
+#      - git checkout $${KUBE_BRANCH:=master}
+      - git checkout EE-6825-add-trust-store
     when:
       event: [push, deployment]
 
@@ -45,7 +46,7 @@ pipeline:
     environment:
       - KUBE_NAMESPACE=pttg-ip-dev
       - ENVIRONMENT=dev
-      - VERSION=build-${DRONE_BUILD_NUMBER}
+      - VERSION=build-${DRONE_BUILD_NUMBER}-ojr
       - KUBE_SERVER=https://kube-api-notprod.notprod.acp.homeoffice.gov.uk
     secrets:
       - pttg_ip_dev
@@ -53,5 +54,5 @@ pipeline:
       - cd kube-pttg-ip-smoke-tests
       - ./deploy.sh
     when:
-      branch: master
+#      branch: master
       event: [push, tag]
