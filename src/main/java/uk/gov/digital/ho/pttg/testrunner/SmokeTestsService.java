@@ -2,12 +2,11 @@ package uk.gov.digital.ho.pttg.testrunner;
 
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestClientResponseException;
 import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
 import uk.gov.digital.ho.pttg.testrunner.domain.Applicant;
 import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
@@ -16,13 +15,10 @@ import java.time.LocalDate;
 import java.util.Collections;
 
 @Component
+@AllArgsConstructor
 public class SmokeTestsService {
 
     private final IpsClient ipsClient;
-
-    public SmokeTestsService(IpsClient ipsClient) {
-        this.ipsClient = ipsClient;
-    }
 
     public SmokeTestsResult runSmokeTests() {
         try {
