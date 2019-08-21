@@ -1,5 +1,6 @@
 package uk.gov.digital.ho.pttg.api;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -8,13 +9,10 @@ import uk.gov.digital.ho.pttg.testrunner.SmokeTestsService;
 
 @RestController
 @Slf4j
+@AllArgsConstructor
 public class SmokeTestsResource {
 
-    private SmokeTestsService smokeTestsService;
-
-    public SmokeTestsResource(SmokeTestsService smokeTestsService) {
-        this.smokeTestsService = smokeTestsService;
-    }
+    private final SmokeTestsService smokeTestsService;
 
     @PostMapping("/smoketests")
     public void runSmokeTests() {
