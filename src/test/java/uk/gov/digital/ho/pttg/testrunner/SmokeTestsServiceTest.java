@@ -14,7 +14,10 @@ import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
 import uk.gov.digital.ho.pttg.testrunner.domain.Applicant;
 import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,10 +34,16 @@ public class SmokeTestsServiceTest {
 
     private SmokeTestsService service;
     private ArgumentCaptor<FinancialStatusRequest> requestCaptor;
+    private Clock fixedClock;
 
     @Before
     public void setUp() {
-        service = new SmokeTestsService(mockIpsClient);
+        LocalDate anyDate = LocalDate.of(2019, 8, 23);;
+        Instant instant = Instant.from(anyDate.atStartOfDay().atZone(ZoneId.systemDefault()));
+        fixedClock = Clock.fixed(instant, ZoneId.systemDefault());
+
+        service = new SmokeTestsService(mockIpsClient, fixedClock);
+
         requestCaptor = ArgumentCaptor.forClass(FinancialStatusRequest.class);
     }
 
@@ -44,8 +53,8 @@ public class SmokeTestsServiceTest {
 
         then(mockIpsClient).should().sendFinancialStatusRequest(requestCaptor.capture());
         FinancialStatusRequest expectedRequest = new FinancialStatusRequest(
-                Collections.singletonList(new Applicant("smoke", "tests", LocalDate.now(), "AA000000A")),
-                LocalDate.now(),
+                Collections.singletonList(new Applicant("smoke", "tests", LocalDate.now(fixedClock), "AA000000A")),
+                LocalDate.now(fixedClock),
                 0);
         assertThat(requestCaptor.getValue()).isEqualTo(expectedRequest);
     }

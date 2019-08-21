@@ -11,6 +11,7 @@ import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
 import uk.gov.digital.ho.pttg.testrunner.domain.Applicant;
 import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Collections;
 
@@ -19,6 +20,7 @@ import java.util.Collections;
 public class SmokeTestsService {
 
     private final IpsClient ipsClient;
+    private final Clock clock;
 
     public SmokeTestsResult runSmokeTests() {
         try {
@@ -44,7 +46,7 @@ public class SmokeTestsService {
     }
 
     private FinancialStatusRequest someRequest() {
-        Applicant someApplicant = new Applicant("smoke", "tests", LocalDate.now(), "AA000000A");
-        return new FinancialStatusRequest(Collections.singletonList(someApplicant), LocalDate.now(), 0);
+        Applicant someApplicant = new Applicant("smoke", "tests", LocalDate.now(clock), "AA000000A");
+        return new FinancialStatusRequest(Collections.singletonList(someApplicant), LocalDate.now(clock), 0);
     }
 }
