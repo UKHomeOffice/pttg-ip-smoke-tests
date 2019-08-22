@@ -19,7 +19,7 @@ import java.util.Collections;
 @AllArgsConstructor
 public class SmokeTestsService {
 
-    private static final String TEST_NINO = "AA000000A";
+    private static final String TEST_NINO = "QQ123456C";
     private final IpsClient ipsClient;
     private final Clock clock;
 
