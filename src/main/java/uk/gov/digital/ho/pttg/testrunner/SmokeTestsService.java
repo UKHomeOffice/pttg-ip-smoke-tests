@@ -38,7 +38,7 @@ public class SmokeTestsService {
 
     private boolean isIdentityUnmatched(HttpStatusCodeException e) {
         try {
-            boolean hasNotMatchedCode = JsonPath.read(e.getResponseBodyAsString(), "$.code").equals("0009");
+            boolean hasNotMatchedCode = JsonPath.read(e.getResponseBodyAsString(), "$.status.code").equals("0009");
             return e.getStatusCode().equals(HttpStatus.NOT_FOUND) && hasNotMatchedCode;
         } catch (PathNotFoundException ignored) {
             return false;

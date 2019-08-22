@@ -70,7 +70,7 @@ public class SmokeTestsServiceTest {
 
     @Test
     public void runSmokeTests_financialStatusRequestNoMatch_returnSuccess() {
-        String notFoundMessage = "{\"code\": \"0009\", \"message\": \"any message\"}";
+        String notFoundMessage = "{\"status\":{\"code\":\"0009\",\"message\":\"Resource not found: /smoketests\"}}";
         given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, notFoundMessage));
 
         SmokeTestsResult testsResult = service.runSmokeTests();
