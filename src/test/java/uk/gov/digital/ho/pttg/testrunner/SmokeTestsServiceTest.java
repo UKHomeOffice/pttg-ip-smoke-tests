@@ -53,7 +53,7 @@ public class SmokeTestsServiceTest {
 
         then(mockIpsClient).should().sendFinancialStatusRequest(requestCaptor.capture());
         FinancialStatusRequest expectedRequest = new FinancialStatusRequest(
-                Collections.singletonList(new Applicant("smoke", "tests", LocalDate.now(fixedClock), "AA000000A")),
+                Collections.singletonList(new Applicant("smoke", "tests", LocalDate.now(fixedClock), "QQ123456C")),
                 LocalDate.now(fixedClock),
                 0);
         assertThat(requestCaptor.getValue()).isEqualTo(expectedRequest);
@@ -70,12 +70,22 @@ public class SmokeTestsServiceTest {
 
     @Test
     public void runSmokeTests_financialStatusRequestNoMatch_returnSuccess() {
-        String notFoundMessage = "{\"status\":{\"code\":\"0009\",\"message\":\"Resource not found: /smoketests\"}}";
+        String notFoundMessage = "{\"status\":{\"code\":\"0009\",\"message\":\"Resource not found: QQ123****\"}}";
         given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, notFoundMessage));
 
         SmokeTestsResult testsResult = service.runSmokeTests();
 
         assertThat(testsResult).isEqualTo(SmokeTestsResult.SUCCESS);
+    }
+
+    @Test
+    public void runSmokeTests_noHandlerFound_returnFailure() {
+        String noHandlerFoundMessage = "{\"status\":{\"code\":\"0009\",\"message\":\"Resource not found: /smoketests\"}}";
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, noHandlerFoundMessage));
+
+        SmokeTestsResult testsResult = service.runSmokeTests();
+
+        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, noHandlerFoundMessage));
     }
 
     @Test

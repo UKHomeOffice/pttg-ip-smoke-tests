@@ -19,6 +19,7 @@ import java.util.Collections;
 @AllArgsConstructor
 public class SmokeTestsService {
 
+    private static final String TEST_NINO = "QQ123456C";
     private final IpsClient ipsClient;
     private final Clock clock;
 
@@ -37,16 +38,35 @@ public class SmokeTestsService {
     }
 
     private boolean isIdentityUnmatched(HttpStatusCodeException e) {
+        if (!isHttpNotFound(e.getStatusCode())) {
+            return false;
+        }
+
+        String errorResponse = e.getResponseBodyAsString();
+
         try {
-            boolean hasNotMatchedCode = JsonPath.read(e.getResponseBodyAsString(), "$.status.code").equals("0009");
-            return e.getStatusCode().equals(HttpStatus.NOT_FOUND) && hasNotMatchedCode;
+            boolean hasNotMatchedCode = readJsonPath(errorResponse, "$.status.code").equals("0009");
+            boolean containsNino = readJsonPath(errorResponse, "$.status.message").contains(getUnredactedNinoPart(TEST_NINO));
+            return hasNotMatchedCode && containsNino;
         } catch (PathNotFoundException ignored) {
             return false;
         }
     }
 
+    private String getUnredactedNinoPart(String nino) {
+        return nino.substring(0, 5);
+    }
+
+    private String readJsonPath(String json, String path) {
+        return JsonPath.read(json, path);
+    }
+
+    private boolean isHttpNotFound(HttpStatus httpStatus) {
+        return httpStatus.equals(HttpStatus.NOT_FOUND);
+    }
+
     private FinancialStatusRequest someRequest() {
-        Applicant someApplicant = new Applicant("smoke", "tests", LocalDate.now(clock), "AA000000A");
+        Applicant someApplicant = new Applicant("smoke", "tests", LocalDate.now(clock), TEST_NINO);
         return new FinancialStatusRequest(Collections.singletonList(someApplicant), LocalDate.now(clock), 0);
     }
 }

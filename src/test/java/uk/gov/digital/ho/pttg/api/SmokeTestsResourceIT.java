@@ -47,7 +47,7 @@ public class SmokeTestsResourceIT {
         mockIpsService.expect(requestTo(containsString("/incomeproving/v3/individual/financialstatus")))
                       .andExpect(method(POST))
                       .andExpect(jsonPath("$.individuals[0].forename", equalTo("smoke")))
-                      .andRespond(withStatus(HttpStatus.NOT_FOUND).body("{\"status\":{\"code\":\"0009\",\"message\":\"Resource not found: /smoketests\"}}"));
+                      .andRespond(withStatus(HttpStatus.NOT_FOUND).body("{\"status\":{\"code\":\"0009\",\"message\":\"Resource not found: QQ123****\"}}"));
 
         ResponseEntity<Void> response = testRestTemplate.exchange("/smoketests", POST, new HttpEntity<>(""), Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
