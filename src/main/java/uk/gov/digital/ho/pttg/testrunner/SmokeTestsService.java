@@ -1,12 +1,8 @@
 package uk.gov.digital.ho.pttg.testrunner;
 
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.PathNotFoundException;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestClientException;
 import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
 import uk.gov.digital.ho.pttg.testrunner.domain.Applicant;
 import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
@@ -14,6 +10,7 @@ import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 
 @Component
 @AllArgsConstructor
@@ -26,43 +23,26 @@ public class SmokeTestsService {
     public SmokeTestsResult runSmokeTests() {
         try {
             ipsClient.sendFinancialStatusRequest(someRequest());
-            return SmokeTestsResult.SUCCESS;
+            return new SmokeTestsResult(false, "Did not expect 200 OK response from IPS");
         } catch (HttpStatusCodeException e) {
-            if (isIdentityUnmatched(e)) {
-                return SmokeTestsResult.SUCCESS;
+            if (e.getResponseHeaders() == null) {
+                return new SmokeTestsResult(false, "No x-component-trace header");
             }
-            return new SmokeTestsResult(false, e.getResponseBodyAsString());
-        } catch (RestClientException e) {
-            return new SmokeTestsResult(false, e.getMessage());
+
+            List<String> components = e.getResponseHeaders().get("x-component-trace");
+            if (components == null) {
+                return new SmokeTestsResult(false, "Null x-component-trace header");
+            }
+            if (components.isEmpty()) {
+                return new SmokeTestsResult(false, "Empty x-component-trace header");
+            }
+            for (String component : components) {
+                if (component.contains("pttg-ip-audit")) {
+                    return SmokeTestsResult.SUCCESS;
+                }
+            }
+            return new SmokeTestsResult(false, "Did not find all expected components in x-component-trace header");
         }
-    }
-
-    private boolean isIdentityUnmatched(HttpStatusCodeException e) {
-        if (!isHttpNotFound(e.getStatusCode())) {
-            return false;
-        }
-
-        String errorResponse = e.getResponseBodyAsString();
-
-        try {
-            boolean hasNotMatchedCode = readJsonPath(errorResponse, "$.status.code").equals("0009");
-            boolean containsNino = readJsonPath(errorResponse, "$.status.message").contains(getUnredactedNinoPart(TEST_NINO));
-            return hasNotMatchedCode && containsNino;
-        } catch (PathNotFoundException ignored) {
-            return false;
-        }
-    }
-
-    private String getUnredactedNinoPart(String nino) {
-        return nino.substring(0, 5);
-    }
-
-    private String readJsonPath(String json, String path) {
-        return JsonPath.read(json, path);
-    }
-
-    private boolean isHttpNotFound(HttpStatus httpStatus) {
-        return httpStatus.equals(HttpStatus.NOT_FOUND);
     }
 
     private FinancialStatusRequest someRequest() {

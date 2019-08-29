@@ -6,9 +6,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
 import uk.gov.digital.ho.pttg.testrunner.domain.Applicant;
@@ -24,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.springframework.http.HttpStatus.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SmokeTestsServiceTest {
@@ -60,67 +59,73 @@ public class SmokeTestsServiceTest {
     }
 
     @Test
-    public void runSmokeTests_financialStatusRequestSuccess_returnSuccess() {
+    public void runSmokeTests_financialStatusRequestSuccess_returnFailure() {
         given(mockIpsClient.sendFinancialStatusRequest(any())).willReturn(new ResponseEntity<>(HttpStatus.OK));
 
-        SmokeTestsResult testsResult = service.runSmokeTests();
-
-        assertThat(testsResult).isEqualTo(SmokeTestsResult.SUCCESS);
+        assertThat(service.runSmokeTests()).isEqualTo(new SmokeTestsResult(false, "Did not expect 200 OK response from IPS"));
     }
 
     @Test
-    public void runSmokeTests_financialStatusRequestNoMatch_returnSuccess() {
-        String notFoundMessage = "{\"status\":{\"code\":\"0009\",\"message\":\"Resource not found: QQ123****\"}}";
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, notFoundMessage));
+    public void runSmokeTests_errorWithoutComponentTrace_returnFailure() {
+        HttpServerErrorException errorWithoutComponentTrace = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any text", new HttpHeaders(), null, null);
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(errorWithoutComponentTrace);
 
         SmokeTestsResult testsResult = service.runSmokeTests();
-
-        assertThat(testsResult).isEqualTo(SmokeTestsResult.SUCCESS);
+        assertThat(testsResult.success()).isFalse();
     }
 
     @Test
-    public void runSmokeTests_noHandlerFound_returnFailure() {
-        String noHandlerFoundMessage = "{\"status\":{\"code\":\"0009\",\"message\":\"Resource not found: /smoketests\"}}";
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, noHandlerFoundMessage));
+    public void runSmokeTests_errorWithoutComponentTrace_giveReason() {
+        HttpServerErrorException errorWithoutComponentTrace = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any text", new HttpHeaders(), null, null);
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(errorWithoutComponentTrace);
 
         SmokeTestsResult testsResult = service.runSmokeTests();
-
-        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, noHandlerFoundMessage));
+        assertThat(testsResult.reason()).contains("x-component-trace");
     }
 
     @Test
-    public void runSmokeTests_notFoundButWrongMessage_returnFailure() {
-        String failureMessage = "some failure message";
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, failureMessage));
+    public void runSmokeTests_errorWithInvalidComponentTrace_returnFailure() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("x-component-trace", "pttg-ip-api");
+        HttpServerErrorException errorWithoutComponentTrace = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any text", headers, null, null);
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(errorWithoutComponentTrace);
 
         SmokeTestsResult testsResult = service.runSmokeTests();
-
-        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, failureMessage));
+        assertThat(testsResult.success()).isFalse();
     }
 
     @Test
-    public void runSmokeTests_otherClientError_returnFailure() {
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(BAD_REQUEST, "some failure message"));
+    public void runSmokeTests_errorWithInvalidComponentTrace_giveReason() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("x-component-trace", "pttg-ip-api");
+        HttpServerErrorException errorWithoutComponentTrace = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any text", headers, null, null);
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(errorWithoutComponentTrace);
 
         SmokeTestsResult testsResult = service.runSmokeTests();
-
-        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, "some failure message"));
+        assertThat(testsResult.reason()).contains("x-component-trace");
     }
 
     @Test
-    public void runSmokeTests_serverError_returnFailure() {
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpServerErrorException(INTERNAL_SERVER_ERROR, "some failure message"));
+    public void runSmokeTests_errorWithExpectedComponentTrace_returnSuccess() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("x-component-trace", "pttg-ip-api,pttg-ip-audit,pttg-ip-hmrc,pttg-ip-hmrc-access-code,HMRC");
+        HttpServerErrorException errorWithoutComponentTrace = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any text", headers, null, null);
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(errorWithoutComponentTrace);
 
-        SmokeTestsResult testsResult = service.runSmokeTests();
-
-        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, "some failure message"));
+        assertThat(service.runSmokeTests()).isEqualTo(SmokeTestsResult.SUCCESS);
     }
 
-    private HttpClientErrorException getHttpClientErrorException(HttpStatus httpStatus, String failureMessage) {
-        return new HttpClientErrorException(httpStatus, "", failureMessage.getBytes(), null);
-    }
+    @Test
+    public void runSmokeTests_multipleComponentTraceHeadersAllComponents_returnSuccess() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("x-component-trace", "pttg-ip-api");
+        headers.add("x-component-trace", "pttg-ip-audit");
+        headers.add("x-component-trace", "pttg-ip-hmrc");
+        headers.add("x-component-trace", "pttg-ip-hmrc-access-code");
+        headers.add("x-component-trace", "HMRC");
+        HttpServerErrorException errorWithoutComponentTrace = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any text", headers, null, null);
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(errorWithoutComponentTrace);
 
-    private HttpServerErrorException getHttpServerErrorException(HttpStatus httpStatus, String failureMessage) {
-        return new HttpServerErrorException(httpStatus, "", failureMessage.getBytes(), null);
+        assertThat(service.runSmokeTests()).isEqualTo(SmokeTestsResult.SUCCESS);
     }
 }
