@@ -114,18 +114,4 @@ public class SmokeTestsServiceTest {
 
         assertThat(service.runSmokeTests()).isEqualTo(SmokeTestsResult.SUCCESS);
     }
-
-    @Test
-    public void runSmokeTests_multipleComponentTraceHeadersAllComponents_returnSuccess() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("x-component-trace", "pttg-ip-api");
-        headers.add("x-component-trace", "pttg-ip-audit");
-        headers.add("x-component-trace", "pttg-ip-hmrc");
-        headers.add("x-component-trace", "pttg-ip-hmrc-access-code");
-        headers.add("x-component-trace", "HMRC");
-        HttpServerErrorException errorWithoutComponentTrace = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any text", headers, null, null);
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(errorWithoutComponentTrace);
-
-        assertThat(service.runSmokeTests()).isEqualTo(SmokeTestsResult.SUCCESS);
-    }
 }
