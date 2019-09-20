@@ -70,7 +70,7 @@ public class SmokeTestsServiceTest {
 
     @Test
     public void runSmokeTests_errorNoHeaders_returnFailure() {
-        HttpServerErrorException exceptionWithoutHeaders = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any status text", null, null, null);
+        HttpServerErrorException exceptionWithoutHeaders = exceptionWithHeaders(null);
         given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithoutHeaders);
 
         assertThat(service.runSmokeTests()).isEqualTo(new SmokeTestsResult(false, "No headers"));
@@ -78,7 +78,7 @@ public class SmokeTestsServiceTest {
 
     @Test
     public void runSmokeTests_noTraceHeader_passNullToChecker() {
-        HttpServerErrorException exceptionWithoutTraceHeader = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any status text", new HttpHeaders(), null, null);
+        HttpServerErrorException exceptionWithoutTraceHeader = exceptionWithHeaders(new HttpHeaders());
         given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithoutTraceHeader);
 
         service.runSmokeTests();
@@ -87,12 +87,9 @@ public class SmokeTestsServiceTest {
 
     @Test
     public void runSmokeTests_traceHeader_passHeaderToChecker() {
-        HttpHeaders componentTraceHeader = new HttpHeaders();
         String someComponentTrace = "pttg-ip-api,pttg-ip-audit,pttg-ip-hmrc,pttg-ip-audit,HMRC";
-        componentTraceHeader.add("x-component-trace", someComponentTrace);
 
-        HttpServerErrorException exceptionWithTraceHeader = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any status text", componentTraceHeader, null, null);
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithTraceHeader);
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithTrace(someComponentTrace));
 
         service.runSmokeTests();
 
@@ -101,12 +98,9 @@ public class SmokeTestsServiceTest {
 
     @Test
     public void runSmokeTests_failureFromChecker_returnFailure() {
-        HttpHeaders anyComponentHeaders = new HttpHeaders();
         String anyComponentTrace = "pttg-ip-api,pttg-ip-audit,pttg-ip-hmrc,pttg-ip-audit,HMRC";
-        anyComponentHeaders.add("x-component-trace", anyComponentTrace);
 
-        HttpServerErrorException anyExceptionWithTraceHeader = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any status text", anyComponentHeaders, null, null);
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(anyExceptionWithTraceHeader);
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithTrace(anyComponentTrace));
         given(mockComponentHeaderChecker.checkAllComponentsPresent(anyList())).willReturn(false);
 
         assertThat(service.runSmokeTests()).isEqualTo(new SmokeTestsResult(false, "Components missing from trace"));
@@ -114,14 +108,21 @@ public class SmokeTestsServiceTest {
 
     @Test
     public void runSmokeTests_successFromChecker_returnSuccess() {
-        HttpHeaders anyComponentHeaders = new HttpHeaders();
         String anyComponentTrace = "pttg-ip-api,pttg-ip-audit,pttg-ip-hmrc,pttg-ip-audit,HMRC";
-        anyComponentHeaders.add("x-component-trace", anyComponentTrace);
 
-        HttpServerErrorException anyExceptionWithTraceHeader = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any status text", anyComponentHeaders, null, null);
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(anyExceptionWithTraceHeader);
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithTrace(anyComponentTrace));
         given(mockComponentHeaderChecker.checkAllComponentsPresent(anyList())).willReturn(true);
 
         assertThat(service.runSmokeTests()).isEqualTo(SmokeTestsResult.SUCCESS);
+    }
+
+    private HttpServerErrorException exceptionWithTrace(String componentTrace) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("x-component-trace", componentTrace);
+        return exceptionWithHeaders(headers);
+    }
+
+    private HttpServerErrorException exceptionWithHeaders(HttpHeaders headers) {
+        return new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any status text", headers, null, null);
     }
 }
