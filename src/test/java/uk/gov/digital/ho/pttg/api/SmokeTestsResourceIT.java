@@ -20,7 +20,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -46,7 +45,7 @@ public class SmokeTestsResourceIT {
     @Test
     public void runSmokeTests_testSuccess_returnSuccess() {
         HttpHeaders headers = new HttpHeaders();
-        headers.add("x-component-trace", "pttg-ip-api,pttg-ip-hmrc,pttg-ip-audit,pttg-ip-hmrc-access-code");
+        headers.add("x-component-trace", "pttg-ip-api,pttg-ip-hmrc,pttg-ip-audit,HMRC");
         mockIpsService.expect(requestTo(containsString("/incomeproving/v3/individual/financialstatus")))
                       .andExpect(method(POST))
                       .andExpect(jsonPath("$.individuals[0].forename", equalTo("smoke")))
@@ -65,6 +64,6 @@ public class SmokeTestsResourceIT {
 
         ResponseEntity<String> response = testRestTemplate.exchange("/smoketests", POST, new HttpEntity<>(""), String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).contains("x-component-trace header");
+        assertThat(response.getBody()).contains("Components missing");
     }
 }

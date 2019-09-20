@@ -17,7 +17,6 @@ dependencies {
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-web'
     compile group: 'org.projectlombok', name: 'lombok', version: '1.18.8'
     compile group: 'com.jayway.jsonpath', name: 'json-path', version: '2.4.0'
-    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
     compile group: 'com.google.guava', name: 'guava', version: '28.1-jre'
 
     testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test'
