@@ -36,7 +36,7 @@ pipeline:
     secrets:
       - docker_password
     commands:
-      - docker login -u="ukhomeofficedigital+pttg" -p=$${DOCKER_PASSWORD} quay.io
+      - docker login -u="ukhomeofficedigital+pttg_ip_smoke_tests" -p=$${DOCKER_PASSWORD} quay.io
       - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:${DRONE_COMMIT_SHA:0:8}
       - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:${DRONE_COMMIT_SHA:0:8}
     when:
@@ -49,7 +49,7 @@ pipeline:
     secrets:
       - docker_password
     commands:
-      - docker login -u="ukhomeofficedigital+pttg" -p=$${DOCKER_PASSWORD} quay.io
+      - docker login -u="ukhomeofficedigital+pttg_ip_smoke_tests" -p=$${DOCKER_PASSWORD} quay.io
       - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:${DRONE_BRANCH}
       - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:${DRONE_BRANCH}
     when:
@@ -64,7 +64,7 @@ pipeline:
     secrets:
       - docker_password
     commands:
-      - docker login -u="ukhomeofficedigital+pttg" -p=$${DOCKER_PASSWORD} quay.io
+      - docker login -u="ukhomeofficedigital+pttg_ip_smoke_tests" -p=$${DOCKER_PASSWORD} quay.io
       - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:latest
       - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:latest
       - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:build-$${DRONE_BUILD_NUMBER}
@@ -82,7 +82,7 @@ pipeline:
     secrets:
       - docker_password
     commands:
-      - docker login -u="ukhomeofficedigital+pttg" -p=$${DOCKER_PASSWORD} quay.io
+      - docker login -u="ukhomeofficedigital+pttg_ip_smoke_tests" -p=$${DOCKER_PASSWORD} quay.io
       - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:$${DRONE_TAG}
       - docker push quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:$${DRONE_TAG}
       - docker tag pttg-ip-smoke-tests quay.io/ukhomeofficedigital/pttg-ip-smoke-tests:${DRONE_COMMIT_SHA:0:8}
