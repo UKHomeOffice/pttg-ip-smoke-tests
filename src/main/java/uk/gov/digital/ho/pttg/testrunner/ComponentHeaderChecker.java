@@ -22,7 +22,6 @@ public class ComponentHeaderChecker {
                                                              .flatMap(ComponentHeaderChecker::splitComponents)
                                                              .collect(Collectors.toSet());
         return componentsPresent.equals(ALL_EXPECTED_COMPONENTS);
-
     }
 
     private static Stream<? extends String> splitComponents(String header) {
