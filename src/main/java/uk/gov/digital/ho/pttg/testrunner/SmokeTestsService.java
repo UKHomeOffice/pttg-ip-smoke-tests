@@ -1,6 +1,7 @@
 package uk.gov.digital.ho.pttg.testrunner;
 
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
@@ -19,34 +20,35 @@ public class SmokeTestsService {
     private static final String TEST_NINO = "QQ123456C";
     private final IpsClient ipsClient;
     private final Clock clock;
+    private final ComponentHeaderChecker componentHeaderChecker;
 
     public SmokeTestsResult runSmokeTests() {
         try {
             ipsClient.sendFinancialStatusRequest(someRequest());
-            return new SmokeTestsResult(false, "Did not expect 200 OK response from IPS");
+            return failure("Did not expect 200 OK response from IPS");
         } catch (HttpStatusCodeException e) {
-            if (e.getResponseHeaders() == null) {
-                return new SmokeTestsResult(false, "No x-component-trace header");
-            }
-
-            List<String> components = e.getResponseHeaders().get("x-component-trace");
-            if (components == null) {
-                return new SmokeTestsResult(false, "Null x-component-trace header");
-            }
-            if (components.isEmpty()) {
-                return new SmokeTestsResult(false, "Empty x-component-trace header");
-            }
-            for (String component : components) {
-                if (component.contains("pttg-ip-audit")) {
-                    return SmokeTestsResult.SUCCESS;
-                }
-            }
-            return new SmokeTestsResult(false, "Did not find all expected components in x-component-trace header");
+            return isExpectedComponentTrace(e.getResponseHeaders());
         }
+    }
+
+    private SmokeTestsResult isExpectedComponentTrace(HttpHeaders headers) {
+        if (headers == null) {
+            return failure("No headers");
+        }
+
+        List<String> componentTraceHeaders = headers.get("x-component-trace");
+        if (componentHeaderChecker.checkAllComponentsPresent(componentTraceHeaders)) {
+            return SmokeTestsResult.SUCCESS;
+        }
+        return failure("Components missing from trace");
     }
 
     private FinancialStatusRequest someRequest() {
         Applicant someApplicant = new Applicant("smoke", "tests", LocalDate.now(clock), TEST_NINO);
         return new FinancialStatusRequest(Collections.singletonList(someApplicant), LocalDate.now(clock), 0);
+    }
+
+    private SmokeTestsResult failure(String reason) {
+        return new SmokeTestsResult(false, reason);
     }
 }
