@@ -6,9 +6,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
 import uk.gov.digital.ho.pttg.testrunner.domain.Applicant;
@@ -18,19 +18,21 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Collections;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.springframework.http.HttpStatus.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SmokeTestsServiceTest {
 
     @Mock
     private IpsClient mockIpsClient;
+    @Mock
+    private ComponentHeaderChecker mockComponentHeaderChecker;
 
     private SmokeTestsService service;
     private ArgumentCaptor<FinancialStatusRequest> requestCaptor;
@@ -42,7 +44,7 @@ public class SmokeTestsServiceTest {
         Instant instant = Instant.from(anyDate.atStartOfDay().atZone(ZoneId.systemDefault()));
         fixedClock = Clock.fixed(instant, ZoneId.systemDefault());
 
-        service = new SmokeTestsService(mockIpsClient, fixedClock);
+        service = new SmokeTestsService(mockIpsClient, fixedClock, mockComponentHeaderChecker);
 
         requestCaptor = ArgumentCaptor.forClass(FinancialStatusRequest.class);
     }
@@ -53,74 +55,74 @@ public class SmokeTestsServiceTest {
 
         then(mockIpsClient).should().sendFinancialStatusRequest(requestCaptor.capture());
         FinancialStatusRequest expectedRequest = new FinancialStatusRequest(
-                Collections.singletonList(new Applicant("smoke", "tests", LocalDate.now(fixedClock), "QQ123456C")),
+                singletonList(new Applicant("smoke", "tests", LocalDate.now(fixedClock), "QQ123456C")),
                 LocalDate.now(fixedClock),
                 0);
         assertThat(requestCaptor.getValue()).isEqualTo(expectedRequest);
     }
 
     @Test
-    public void runSmokeTests_financialStatusRequestSuccess_returnSuccess() {
+    public void runSmokeTests_financialStatusRequestSuccess_returnFailure() {
         given(mockIpsClient.sendFinancialStatusRequest(any())).willReturn(new ResponseEntity<>(HttpStatus.OK));
 
-        SmokeTestsResult testsResult = service.runSmokeTests();
-
-        assertThat(testsResult).isEqualTo(SmokeTestsResult.SUCCESS);
+        assertThat(service.runSmokeTests()).isEqualTo(new SmokeTestsResult(false, "Did not expect 200 OK response from IPS"));
     }
 
     @Test
-    public void runSmokeTests_financialStatusRequestNoMatch_returnSuccess() {
-        String notFoundMessage = "{\"status\":{\"code\":\"0009\",\"message\":\"Resource not found: QQ123****\"}}";
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, notFoundMessage));
+    public void runSmokeTests_errorNoHeaders_returnFailure() {
+        HttpServerErrorException exceptionWithoutHeaders = exceptionWithHeaders(null);
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithoutHeaders);
 
-        SmokeTestsResult testsResult = service.runSmokeTests();
-
-        assertThat(testsResult).isEqualTo(SmokeTestsResult.SUCCESS);
+        assertThat(service.runSmokeTests()).isEqualTo(new SmokeTestsResult(false, "No headers"));
     }
 
     @Test
-    public void runSmokeTests_noHandlerFound_returnFailure() {
-        String noHandlerFoundMessage = "{\"status\":{\"code\":\"0009\",\"message\":\"Resource not found: /smoketests\"}}";
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, noHandlerFoundMessage));
+    public void runSmokeTests_noTraceHeader_passNullToChecker() {
+        HttpServerErrorException exceptionWithoutTraceHeader = exceptionWithHeaders(new HttpHeaders());
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithoutTraceHeader);
 
-        SmokeTestsResult testsResult = service.runSmokeTests();
-
-        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, noHandlerFoundMessage));
+        service.runSmokeTests();
+        then(mockComponentHeaderChecker).should().checkAllComponentsPresent(null);
     }
 
     @Test
-    public void runSmokeTests_notFoundButWrongMessage_returnFailure() {
-        String failureMessage = "some failure message";
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(NOT_FOUND, failureMessage));
+    public void runSmokeTests_traceHeader_passHeaderToChecker() {
+        String someComponentTrace = "pttg-ip-api,pttg-ip-audit,pttg-ip-hmrc,pttg-ip-audit,HMRC";
 
-        SmokeTestsResult testsResult = service.runSmokeTests();
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithTrace(someComponentTrace));
 
-        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, failureMessage));
+        service.runSmokeTests();
+
+        then(mockComponentHeaderChecker).should().checkAllComponentsPresent(singletonList(someComponentTrace));
     }
 
     @Test
-    public void runSmokeTests_otherClientError_returnFailure() {
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpClientErrorException(BAD_REQUEST, "some failure message"));
+    public void runSmokeTests_failureFromChecker_returnFailure() {
+        String anyComponentTrace = "pttg-ip-api,pttg-ip-audit,pttg-ip-hmrc,pttg-ip-audit,HMRC";
 
-        SmokeTestsResult testsResult = service.runSmokeTests();
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithTrace(anyComponentTrace));
+        given(mockComponentHeaderChecker.checkAllComponentsPresent(anyList())).willReturn(false);
 
-        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, "some failure message"));
+        assertThat(service.runSmokeTests()).isEqualTo(new SmokeTestsResult(false, "Components missing from trace"));
     }
 
     @Test
-    public void runSmokeTests_serverError_returnFailure() {
-        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(getHttpServerErrorException(INTERNAL_SERVER_ERROR, "some failure message"));
+    public void runSmokeTests_successFromChecker_returnSuccess() {
+        String anyComponentTrace = "pttg-ip-api,pttg-ip-audit,pttg-ip-hmrc,pttg-ip-audit,HMRC";
 
-        SmokeTestsResult testsResult = service.runSmokeTests();
+        given(mockIpsClient.sendFinancialStatusRequest(any())).willThrow(exceptionWithTrace(anyComponentTrace));
+        given(mockComponentHeaderChecker.checkAllComponentsPresent(anyList())).willReturn(true);
 
-        assertThat(testsResult).isEqualTo(new SmokeTestsResult(false, "some failure message"));
+        assertThat(service.runSmokeTests()).isEqualTo(SmokeTestsResult.SUCCESS);
     }
 
-    private HttpClientErrorException getHttpClientErrorException(HttpStatus httpStatus, String failureMessage) {
-        return new HttpClientErrorException(httpStatus, "", failureMessage.getBytes(), null);
+    private HttpServerErrorException exceptionWithTrace(String componentTrace) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("x-component-trace", componentTrace);
+        return exceptionWithHeaders(headers);
     }
 
-    private HttpServerErrorException getHttpServerErrorException(HttpStatus httpStatus, String failureMessage) {
-        return new HttpServerErrorException(httpStatus, "", failureMessage.getBytes(), null);
+    private HttpServerErrorException exceptionWithHeaders(HttpHeaders headers) {
+        return new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "any status text", headers, null, null);
     }
 }
