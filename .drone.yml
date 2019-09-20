@@ -26,7 +26,6 @@ pipeline:
     commands:
       - docker build -t pttg-ip-smoke-tests .
     when:
-      branch: master
       event: push
 
   install-docker-image-with-githash-tag:
