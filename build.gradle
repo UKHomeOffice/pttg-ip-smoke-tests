@@ -1,5 +1,6 @@
 plugins {
     id 'org.springframework.boot' version '2.1.7.RELEASE'
+    id 'net.researchgate.release' version '2.6.0'
 }
 
 repositories {
@@ -32,4 +33,10 @@ dependencies {
     testCompile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9'
     testCompile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.9'
     testCompile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.9.9'
+}
+
+release {
+    preTagCommitMessage = '[Gradle Release Plugin] (EE-6825) [CI SKIP] - pre tag commit: '
+    tagCommitMessage = '[Gradle Release Plugin] (EE-6825) - creating tag: '
+    newVersionCommitMessage = '[Gradle Release Plugin] (EE-6825) [CI SKIP] - new version commit: '
 }
