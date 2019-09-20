@@ -36,6 +36,12 @@ public class ComponentHeaderCheckerTest {
     }
 
     @Test
+    public void checkAllComponentsPresent_allComponentsOneHeader_withSpaces_returnTrue() {
+        List<String> allComponentsWithSpaces = singletonList("pttg-ip-audit, pttg-ip-api ,pttg-ip-hmrc  ,  HMRC");
+        assertThat(componentHeaderChecker.checkAllComponentsPresent(allComponentsWithSpaces)).isTrue();
+    }
+
+    @Test
     public void checkAllComponentsPresent_componentMissingSingleHeader_returnFalse() {
         List<String> singleHeaderWithMissing = singletonList("pttg-ip-hmrc,HMRC,pttg-ip-audit");
         assertThat(componentHeaderChecker.checkAllComponentsPresent(singleHeaderWithMissing)).isFalse();
@@ -63,5 +69,12 @@ public class ComponentHeaderCheckerTest {
     public void checkAllComponentsPresent_allPresent_someInSameHeader_returnTrue() {
         List<String> allComponentsSomeSameHeader = asList("pttg-ip-hmrc,pttg-ip-hmrc", "pttg-ip-audit", "HMRC,pttg-ip-hmrc", "pttg-ip-api");
         assertThat(componentHeaderChecker.checkAllComponentsPresent(allComponentsSomeSameHeader)).isTrue();
+    }
+
+    @Test
+    public void checkAllComponentsPresent_allPresentMultipleHeaders_someSpaces_returnTrue() {
+        List<String> allComponentsWithSpaces = asList("pttg-ip-audit ", " pttg-ip-hmrc", " HMRC ", "   pttg-ip-api");
+        assertThat(componentHeaderChecker.checkAllComponentsPresent(allComponentsWithSpaces)).isTrue();
+
     }
 }

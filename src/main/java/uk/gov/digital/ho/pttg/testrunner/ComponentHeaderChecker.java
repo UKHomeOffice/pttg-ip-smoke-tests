@@ -20,6 +20,7 @@ public class ComponentHeaderChecker {
 
         Set<String> componentsPresent = componentTraceHeaders.stream()
                                                              .flatMap(ComponentHeaderChecker::splitComponents)
+                                                             .map(String::trim)
                                                              .collect(Collectors.toSet());
         return componentsPresent.equals(ALL_EXPECTED_COMPONENTS);
     }
