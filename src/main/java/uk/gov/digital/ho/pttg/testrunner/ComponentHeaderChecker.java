@@ -26,14 +26,18 @@ public class ComponentHeaderChecker {
                                                              .collect(Collectors.toSet());
 
         boolean allPresent = componentsPresent.equals(ALL_EXPECTED_COMPONENTS);
-        if (!allPresent) {
-            log.info("Component(s) missing: {}", getMissingComponents(componentsPresent));
-        }
+        logMissingComponents(componentsPresent, allPresent);
         return allPresent;
     }
 
     private static Stream<? extends String> splitComponents(String header) {
         return Arrays.stream(header.split(","));
+    }
+
+    private void logMissingComponents(Set<String> componentsPresent, boolean allPresent) {
+        if (!allPresent) {
+            log.info("Component(s) missing: {}", getMissingComponents(componentsPresent));
+        }
     }
 
     private String getMissingComponents(Set<String> componentsPresent) {
