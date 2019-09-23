@@ -46,6 +46,14 @@ public class ComponentHeaderCheckerTest {
     }
 
     @Test
+    public void checkAllComponentsPresent_null_log() {
+        componentHeaderChecker.checkAllComponentsPresent(null);
+        then(mockLogAppender).should().doAppend(logCaptor.capture());
+
+        assertThat(logCaptor.getValue().getFormattedMessage()).contains("null");
+    }
+
+    @Test
     public void checkAllComponentsPresent_emptyList_returnFalse() {
         assertThat(componentHeaderChecker.checkAllComponentsPresent(emptyList())).isFalse();
     }
