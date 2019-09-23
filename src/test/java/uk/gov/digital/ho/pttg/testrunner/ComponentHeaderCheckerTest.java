@@ -1,17 +1,46 @@
 package uk.gov.digital.ho.pttg.testrunner;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ComponentHeaderCheckerTest {
 
+    @Mock
+    public Appender<ILoggingEvent> mockLogAppender;
+
     private final ComponentHeaderChecker componentHeaderChecker = new ComponentHeaderChecker();
+    private ArgumentCaptor<LoggingEvent> logCaptor;
+
+    @Before
+    public void setUp() {
+        Logger logger = (Logger) LoggerFactory.getLogger(ComponentHeaderChecker.class);
+        logger.addAppender(mockLogAppender);
+        logger.setLevel(Level.INFO);
+
+        logCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+    }
 
     @Test
     public void checkAllComponentsPresent_null_returnFalse() {
@@ -25,8 +54,7 @@ public class ComponentHeaderCheckerTest {
 
     @Test
     public void checkAllComponentsPresent_singleHeaderAllComponents_returnTrue() {
-        List<String> singleHeaderAllComponents = singletonList("pttg-ip-api,pttg-ip-hmrc,pttg-ip-audit,HMRC");
-        assertThat(componentHeaderChecker.checkAllComponentsPresent(singleHeaderAllComponents)).isTrue();
+        assertThat(componentHeaderChecker.checkAllComponentsPresent(singleHeaderAllComponents())).isTrue();
     }
 
     @Test
@@ -75,6 +103,40 @@ public class ComponentHeaderCheckerTest {
     public void checkAllComponentsPresent_allPresentMultipleHeaders_someSpaces_returnTrue() {
         List<String> allComponentsWithSpaces = asList("pttg-ip-audit ", " pttg-ip-hmrc", " HMRC ", "   pttg-ip-api");
         assertThat(componentHeaderChecker.checkAllComponentsPresent(allComponentsWithSpaces)).isTrue();
+    }
 
+    @Test
+    public void checkAllComponentsPresent_allPresent_log() {
+        componentHeaderChecker.checkAllComponentsPresent(singleHeaderAllComponents());
+
+        then(mockLogAppender).should(never()).doAppend(any());
+    }
+
+    @Test
+    public void checkAllComponentsPresent_componentMissing_logged() {
+        List<String> hmrcServiceMissing = singletonList("pttg-ip-api,pttg-ip-audit,HMRC");
+        componentHeaderChecker.checkAllComponentsPresent(hmrcServiceMissing);
+
+        then(mockLogAppender).should().doAppend(logCaptor.capture());
+        String logMessage = logCaptor.getValue().getFormattedMessage();
+        assertThat(logMessage).startsWith("Component(s)      missing")
+                              .contains("pttg-ip-hmrc")
+                              .doesNotContain("pttg-ip-api", "pttg-ip-audit", "HMRC");
+    }
+
+    @Test
+    public void checkAllComponentsPresent_multipleMissing_logAll() {
+        List<String> componentsMissing = Arrays.asList("pttg-ip-audit", "pttg-ip-hmrc");
+        componentHeaderChecker.checkAllComponentsPresent(componentsMissing);
+
+        then(mockLogAppender).should().doAppend(logCaptor.capture());
+        String logMessage = logCaptor.getValue().getFormattedMessage();
+        assertThat(logMessage).startsWith("Component(s) missing")
+                              .contains("HMRC", "pttg-ip-api")
+                              .doesNotContain("pttg-ip-audit", "pttg-ip-hmrc");
+    }
+
+    private List<String> singleHeaderAllComponents() {
+        return singletonList("pttg-ip-api,pttg-ip-hmrc,pttg-ip-audit,HMRC");
     }
 }
