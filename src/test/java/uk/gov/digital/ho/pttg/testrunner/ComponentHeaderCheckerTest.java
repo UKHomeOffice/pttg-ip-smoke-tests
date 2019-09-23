@@ -119,7 +119,7 @@ public class ComponentHeaderCheckerTest {
 
         then(mockLogAppender).should().doAppend(logCaptor.capture());
         String logMessage = logCaptor.getValue().getFormattedMessage();
-        assertThat(logMessage).startsWith("Component(s)      missing")
+        assertThat(logMessage).startsWith("Component(s) missing")
                               .contains("pttg-ip-hmrc")
                               .doesNotContain("pttg-ip-api", "pttg-ip-audit", "HMRC");
     }
