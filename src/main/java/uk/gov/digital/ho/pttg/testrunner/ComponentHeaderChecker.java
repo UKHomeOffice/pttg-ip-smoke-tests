@@ -17,6 +17,7 @@ public class ComponentHeaderChecker {
 
     public boolean checkAllComponentsPresent(List<String> componentTraceHeaders) {
         if (componentTraceHeaders == null) {
+            log.info("x-component-trace header is null");
             return false;
         }
 
