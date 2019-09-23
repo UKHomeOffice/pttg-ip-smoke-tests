@@ -35,7 +35,9 @@ public class ComponentHeaderChecker {
     }
 
     private void logMissingComponents(Set<String> componentsPresent, boolean allPresent) {
-        if (!allPresent) {
+        if (allPresent) {
+            log.info("All components present");
+        } else {
             log.info("Component(s) missing: {}", getMissingComponents(componentsPresent));
         }
     }

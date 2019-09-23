@@ -20,9 +20,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ComponentHeaderCheckerTest {
@@ -109,7 +107,8 @@ public class ComponentHeaderCheckerTest {
     public void checkAllComponentsPresent_allPresent_log() {
         componentHeaderChecker.checkAllComponentsPresent(singleHeaderAllComponents());
 
-        then(mockLogAppender).should(never()).doAppend(any());
+        then(mockLogAppender).should().doAppend(logCaptor.capture());
+        assertThat(logCaptor.getValue().getFormattedMessage()).isEqualTo("All components present");
     }
 
     @Test
