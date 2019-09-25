@@ -1,6 +1,7 @@
 package uk.gov.digital.ho.pttg.testrunner;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class SmokeTestsService {
 
     private static final String TEST_NINO = "QQ123456C";
@@ -27,6 +29,8 @@ public class SmokeTestsService {
             ipsClient.sendFinancialStatusRequest(someRequest());
             return failure("Did not expect 200 OK response from IPS");
         } catch (HttpStatusCodeException e) {
+            log.info("HttpStatusCodeException: {}", e.toString(), e);
+            log.info("Headers: {}", e.getResponseHeaders());
             return isExpectedComponentTrace(e.getResponseHeaders());
         }
     }
