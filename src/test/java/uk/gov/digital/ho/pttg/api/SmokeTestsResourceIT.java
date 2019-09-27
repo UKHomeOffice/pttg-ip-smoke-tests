@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -20,6 +19,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -44,12 +44,11 @@ public class SmokeTestsResourceIT {
 
     @Test
     public void runSmokeTests_testSuccess_returnSuccess() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("x-component-trace", "pttg-ip-api,pttg-ip-hmrc,pttg-ip-audit,HMRC");
+        String testSuccessBody = "{\"status\": {\"code\": \"0009\", \"message\": \"Resource not found: QQ123****\"}}";
         mockIpsService.expect(requestTo(containsString("/incomeproving/v3/individual/financialstatus")))
                       .andExpect(method(POST))
                       .andExpect(jsonPath("$.individuals[0].forename", equalTo("smoke")))
-                      .andRespond(withServerError().headers(headers));
+                      .andRespond(withStatus(HttpStatus.NOT_FOUND).body(testSuccessBody));
 
         ResponseEntity<Void> response = testRestTemplate.exchange("/smoketests", POST, new HttpEntity<>(""), Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -60,10 +59,10 @@ public class SmokeTestsResourceIT {
         mockIpsService.expect(requestTo(containsString("/incomeproving/v3/individual/financialstatus")))
                       .andExpect(method(POST))
                       .andExpect(jsonPath("$.individuals[0].forename", equalTo("smoke")))
-                      .andRespond(withServerError().headers(HttpHeaders.EMPTY));
+                      .andRespond(withServerError());
 
         ResponseEntity<String> response = testRestTemplate.exchange("/smoketests", POST, new HttpEntity<>(""), String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).contains("Components missing");
+        assertThat(response.getBody()).contains("pttg-ip-api error");
     }
 }

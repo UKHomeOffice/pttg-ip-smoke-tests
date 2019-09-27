@@ -1,46 +1,47 @@
 package uk.gov.digital.ho.pttg.testrunner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import uk.gov.digital.ho.pttg.api.SmokeTestsResult;
 import uk.gov.digital.ho.pttg.testrunner.domain.Applicant;
+import uk.gov.digital.ho.pttg.testrunner.domain.BaseResponse;
 import uk.gov.digital.ho.pttg.testrunner.domain.FinancialStatusRequest;
+import uk.gov.digital.ho.pttg.testrunner.domain.ResponseStatus;
 
+import java.io.IOException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.List;
 
 @Component
 @AllArgsConstructor
 public class SmokeTestsService {
 
     private static final String TEST_NINO = "QQ123456C";
+    private static final String EXPECTED_RESPONSE_MESSAGE = String.format("Resource not found: %s****", TEST_NINO.substring(0, 5));
+
     private final IpsClient ipsClient;
     private final Clock clock;
-    private final ComponentHeaderChecker componentHeaderChecker;
+    private final ObjectMapper objectMapper;
 
     public SmokeTestsResult runSmokeTests() {
         try {
             ipsClient.sendFinancialStatusRequest(someRequest());
-            return failure("Did not expect 200 OK response from IPS");
         } catch (HttpStatusCodeException e) {
-            return isExpectedComponentTrace(e.getResponseHeaders());
+            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                String responseBody = e.getResponseBodyAsString();
+                if (isExpectedResponse(responseBody)) {
+                    return SmokeTestsResult.SUCCESS;
+                }
+            }
+            return failure("pttg-ip-api error");
         }
-    }
-
-    private SmokeTestsResult isExpectedComponentTrace(HttpHeaders headers) {
-        if (headers == null) {
-            return failure("No headers");
-        }
-
-        List<String> componentTraceHeaders = headers.get("x-component-trace");
-        if (componentHeaderChecker.checkAllComponentsPresent(componentTraceHeaders)) {
-            return SmokeTestsResult.SUCCESS;
-        }
-        return failure("Components missing from trace");
+        return failure("Did not expect 200 OK response from IPS");
     }
 
     private FinancialStatusRequest someRequest() {
@@ -50,5 +51,14 @@ public class SmokeTestsService {
 
     private SmokeTestsResult failure(String reason) {
         return new SmokeTestsResult(false, reason);
+    }
+
+    private boolean isExpectedResponse(String responseBody) {
+        try {
+            ResponseStatus responseStatus = objectMapper.readValue(responseBody, BaseResponse.class).status();
+            return responseStatus.code().equals("0009") && responseStatus.message().equals(EXPECTED_RESPONSE_MESSAGE);
+        } catch (IOException e) {
+            return false;
+        }
     }
 }
